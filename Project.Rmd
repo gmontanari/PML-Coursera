@@ -1,18 +1,34 @@
-Practical Machine Learning: Mauricio G. Tec
-========================================================
-
+PRACTICAL MACHINE LEARNING
+===================================================
+Week 3 project using Random Forests
+===================================================
+## by Mauricio G. Tec
 
 ```{r echo=FALSE}
 setwd("C:/Users/Mauricio/Dropbox/Cambridge Courses/Practical Machine Learning")
 ```
-In this project we use a Random Forest to ---- data from ______ to try to predict ______. For the purposes of this html demonstation, instead of taking the full training set for training, I will split it in a training testing set, so that I can compare and tabulate the predicted values against the real ones in the training set. 
+This project is a demostration of the prediction algorithm know as *Random Forests*. The ideas of this method are (1) to create various decision trees sampling both from the set of observations and from the set of variables and (2) to average the prediction probabilities of each tree given a new observation not in the original dataset. 
 
-However, I use the full model with 3-fold cross validation to compute the final results in the project (Note: I use only 3-fold validation since it is highly demanding in computational power).
+This project is part of the course "Practical Machine Learing" in the Coursera Specialization in Data Science by the John Hopkins University. All the impliementation is done using the *caret* package in R as demonstrated in the course. 
 
-Explanation of the data here ----------
+### Description of the data:
 
-* Set-up
-```{r results="hide"}
+*Note* : this excerpt is taken directly from the description of the assignment in the course page.
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement of a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har.
+
+### Project outline:
+1. Since we do not know what is thea real class of the observations in the testing set that has been provided, in order to demonstrate the technique, we first split the training set in a training subset and in a testing set. Furthermore, the training subset is reduced to 100 observations, since the *Random Forests* demands a lot of computation power and time. We show (a) a predicting table comparing the predictions and real resuls in the testing set, (b) a sample tree and (c) two graphs chosen showing comparisons between predictors and accuracy in prediction.
+
+2. We now implement the full model with cross validation. We have decided to use 10-fold cross validation, although only three repetitions were used for computational reasons. Fuerthermore, the total number of observations in the training set had to be reduced to 2000 observations.  
+
+
+
+## 1) Demonstration implementation with fewer observations and splitting of the training set
+
+First we load the necessary packages and data in R
+
+```{r results='hide', message=FALSE, warning=FALSE}
 library(caret)
 library(ggplot2)
 library(gridExtra)
@@ -20,7 +36,7 @@ library(gridExtra)
 set.seed(110104)
 
 training <- read.csv("pml-training.csv")[ ,-1]
-# remove columns with NA's or empty values
+# remove   columns with NA's or empty values
 training <- training[ ,!sapply(training, function(x) 
   any(is.na(x) | (x=="")))] 
 testing <- read.csv("pml-testing.csv")[ ,-1]
@@ -29,24 +45,24 @@ vars <- names(training)
 testing <- testing[ ,names(testing) %in% vars]
 ```
 
-* 1) Splitting for demonstation purposes
-========================================
-========================================
-
+Now, we will split the trianing set in subsets for training and testing in the first part of our project. We also use the function sample to take a subset of size 100.
 
 ```{r}
 inTraining <- createDataPartition(training$classe, p = .6, list = FALSE)
 training.sub <- training[inTraining, ]
 testing.sub <- training[-inTraining, ]
 # For demonstration purposes we only use 250 observations
-training.sub <- training.sub[sample(dim(training.sub)[1], 50), ]
+training.sub <- training.sub[sample(dim(training.sub)[1], 100), ]
 ```
 
-```{r}
-modFit.dem <- train(classe ~., data=training.sub, method="rf", prox=TRUE)
+The following command fits the model using random forests.
+
+```{r message=FALSE, warning=FALSE}
+modFit.dem <- train(classe ~., data=training.sub, method="rf")
 modFit.dem
 ```
 
+We know compare the predicted results agains the real results in the testing subset created earlier (not in the final testing subset of 20 individuals of which we do not know the real value, but in the one separated from the original training set).
 ```{r}
 pred <- predict(modFit.dem, testing.sub)
 testingTRUE <- testing.sub$classe
@@ -54,28 +70,27 @@ predRight <- pred==testingTRUE
 table(pred, testingTRUE)
 ```
 
-
 Here we see an example of a tree
 ```{r}
-tree <- getTree(modFit.dem$finalModel, k=2, labelVar=TRUE)
+tree <- getTree(modFit.dem$finalModel, k=3, labelVar=TRUE)
 tree
 ```
 
-```{r fig.width=7, fig.height=6}
-classvars <- as.character(tree[ ,"split var"])[1:4]
+Here we see an example of comparing predictors with accuracy of predictions. The predictos are taken in order of appearance as nods in the previously extracted tree.
+
+```{r fig.width=11, fig.height=4}
+classvars <- na.omit(as.character(tree[ ,"split var"]))[1:4]
+classvars
 q1 <- qplot(testing.sub[ ,classvars[1]], testing.sub[ ,classvars[2]], data=testing.sub, main="new data predictions", xlab=classvars[1], ylab=classvars[2], colour=predRight)
 q2 <- qplot(testing.sub[ ,classvars[3]], testing.sub[ ,classvars[4]], data=testing.sub, main="new data predictions", xlab=classvars[3], ylab=classvars[4], colour=predRight)
 grid.arrange(q1, q2, ncol=2)
 ```
 
+## Full model with cross-validation and final prediction
 
-* Model with cross-validation and final prediction
-
-First we set-up the controls for the cross validation. We will do 10-fold cross-validation but only three repetitions since I lack the computational power. 
+Four our full model we set-up the fit controls to use 10-fold cross validation with three repetitions.
 
 ```{r results="hide"}
-
-# 10-fold cross validation (gives a better estimation of the error)
 fitControl <- trainControl(## 10-fold CV
                            method = "repeatedcv",
                            number = 10,
@@ -83,20 +98,20 @@ fitControl <- trainControl(## 10-fold CV
                            repeats = 3)
 ```
 
-Now we run the model. We can observer that even when restricting to 2500 out of the 19622 available observations it is really slow.
+Now we run the model. We can observe that even when restricting to 2000 out of the 19622 available observations it is really slow.
 
 ```{r}
-# Again, doing the predictions with all the database is unfeasable, here we will take 2500 observations.
-# ptm <- proc.time()
-#modFit <- train(classe ~., data=training[sample(dim(training)[1], 2500), ],  trControl = fitControl, method="rf", prox=TRUE)
-#modFit
-#proc.time() - ptm
+ptm <- proc.time()
+modFitFull <- train(classe ~., data=training[sample(dim(training)[1], 2000), ],  trControl = fitControl, method="rf", prox=TRUE)
+modFitFull
+proc.time() - ptm
 ```
 
 Here is the list of prediction of the 20 individuals in the testing set.
 
 ```{r}
-#predict(modFit, testing)
+answers <- predict(modFitFull, testing)
+answers
 ```
 
 ```{r results="hide"}
@@ -107,6 +122,6 @@ pml_write_files = function(x){
     write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
   }
 }
-#pml_write_files(predict(modFit, testing))
+pml_write_files(answers)
 ```
 
