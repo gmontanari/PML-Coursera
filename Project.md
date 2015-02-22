@@ -252,18 +252,54 @@ Now we run the model. We can observe that even when restricting to 2000 out of t
 
 
 ```r
-#ptm <- proc.time()
-#modFitFull <- train(classe ~., data=training[sample(dim(training)[1], 2000), ],  trControl = #fitControl, method="rf", prox=TRUE)
-#modFitFull
-#proc.time() - ptm
+ptm <- proc.time()
+modFitFull <- train(classe ~., data=training[sample(dim(training)[1], 2000), ],  trControl = fitControl, method="rf", prox=TRUE)
+modFitFull
+```
+
+```
+## Random Forest 
+## 
+## 2000 samples
+##   58 predictor
+##    5 classes: 'A', 'B', 'C', 'D', 'E' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold, repeated 3 times) 
+## 
+## Summary of sample sizes: 1799, 1801, 1798, 1800, 1801, 1801, ... 
+## 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy  Kappa   Accuracy SD  Kappa SD
+##    2    0.9575    0.9459  0.014750     0.01878 
+##   41    0.9845    0.9803  0.008922     0.01135 
+##   80    0.9823    0.9775  0.008866     0.01127 
+## 
+## Accuracy was used to select the optimal model using  the largest value.
+## The final value used for the model was mtry = 41.
+```
+
+```r
+proc.time() - ptm
+```
+
+```
+##    user  system elapsed 
+## 1347.45    8.08 1364.10
 ```
 
 Here is the list of prediction of the 20 individuals in the testing set.
 
 
 ```r
-#answers <- predict(modFitFull, testing)
-#answers
+answers <- predict(modFitFull, testing)
+answers
+```
+
+```
+##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E
 ```
 
 
@@ -275,6 +311,6 @@ pml_write_files = function(x){
     write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
   }
 }
-#pml_write_files(answers)
+pml_write_files(answers)
 ```
 
