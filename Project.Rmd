@@ -20,7 +20,7 @@ Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible t
 ### Project outline:
 1. Since we do not know what is thea real class of the observations in the testing set that has been provided, in order to demonstrate the technique, we first split the training set in a training subset and in a testing set. Furthermore, the training subset is reduced to 100 observations, since the *Random Forests* demands a lot of computation power and time. We show (a) a predicting table comparing the predictions and real resuls in the testing set, (b) a sample tree and (c) two graphs chosen showing comparisons between predictors and accuracy in prediction.
 
-2. We now implement the full model with cross validation. We have decided to use 10-fold cross validation, although only three repetitions were used for computational reasons. Fuerthermore, the total number of observations in the training set had to be reduced to 2000 observations.  
+2. We now implement the full model with cross validation. We have decided to use 10-fold cross validation, although only three repetitions were used for computational reasons. Fuerthermore, the total number of observations in the training set had to be reduced to 5000 observations.  
 
 
 
@@ -95,14 +95,14 @@ fitControl <- trainControl(## 10-fold CV
                            method = "repeatedcv",
                            number = 10,
                            ## repeated two times
-                           repeats = 3)
+                           repeats = 4)
 ```
 
-Now we run the model. We can observe that even when restricting to 2000 out of the 19622 available observations it is really slow.
+Now we run the model. We can observe that even when restricting to 5000 out of the 19622 available observations it is really slow.
 
 ```{r}
 ptm <- proc.time()
-modFitFull <- train(classe ~., data=training[sample(dim(training)[1], 2000), ],  trControl = fitControl, method="rf", prox=TRUE)
+modFitFull <- train(classe ~., data=training[sample(dim(training)[1], 5000), ],  trControl = fitControl, method="rf", prox=TRUE)
 modFitFull
 proc.time() - ptm
 ```
