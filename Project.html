@@ -181,27 +181,254 @@ hljs.initHighlightingOnLoad();
 <body>
 <h1>Practical Machine Learning: Mauricio G. Tec</h1>
 
-<pre><code class="r">setwd(&quot;C:/Users/Mauricio/Dropbox/Cambridge Courses/Practical Machine Learning&quot;)
+<p>In this project we use a Random Forest to &mdash;- data from ______ to try to predict ______. For the purposes of this html demonstation, instead of taking the full training set for training, I will split it in a training testing set, so that I can compare and tabulate the predicted values against the real ones in the training set. </p>
+
+<p>However, I use the full model with 3-fold cross validation to compute the final results in the project (Note: I use only 3-fold validation since it is highly demanding in computational power).</p>
+
+<p>Explanation of the data here &mdash;&mdash;&mdash;-</p>
+
+<ul>
+<li>Set-up</li>
+</ul>
+
+<pre><code class="r">library(caret)
 </code></pre>
 
-<pre><code class="r">summary(cars)
+<pre><code>## Warning: package &#39;caret&#39; was built under R version 3.0.3
 </code></pre>
 
-<pre><code>##      speed           dist    
-##  Min.   : 4.0   Min.   :  2  
-##  1st Qu.:12.0   1st Qu.: 26  
-##  Median :15.0   Median : 36  
-##  Mean   :15.4   Mean   : 43  
-##  3rd Qu.:19.0   3rd Qu.: 56  
-##  Max.   :25.0   Max.   :120
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2
 </code></pre>
 
-<p>You can also embed plots, for example:</p>
-
-<pre><code class="r">plot(cars)
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 3.0.3
 </code></pre>
 
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfgAAAGwCAMAAABy/YdMAAAAbFBMVEX9/v0AAAAAADkAAGUAOTkAOWUAOY8AZrU5AAA5ADk5AGU5OY85j9plAABlADllAGVlOQBlZjlltf2POQCPOTmPOWWPjzmPtY+P2/21ZgC1/rW1/v3ajzna24/a/v39tWX924/9/rX9/tr9/v0hhXJqAAAAJHRSTlP//////////////////////////////////////////////wBYLA0NAAAACXBIWXMAAAsSAAALEgHS3X78AAAJjElEQVR4nO3di3LbuBlA4bW7jd2snLTyXqSNGl38/u9YkVbqRKIVUsRPAjjnm061bSYIN8ckCF2gX16E9MvcB6B5GB7K8FCGhzI8lOGhDA9leCjDQxkeyvBQhocyPJThoQwPZXgow0MZHsrwUIaHMjyU4aEMD2V4KMNDGR7K8FCGhzI8lOGhDA9leCjDQxkeyvBQhocyPJThoQwPZXgow0MZHsrwUIaHMjyU4aEMD2V4KMNDGR7K8FCGhzI8lOGhDA9leCjDQxkeakz4O+UsMPyI36too8PvHtufn398GTq0ZjU2/OF52T5uP3wdOLRmNTb8/vOXHx77D61ZecZDjZ7j90/O8SXyrh7K8FAplnP3K2/uMvPTJ2iS3NwdnheGz8rdy0//+tMs59YP34Xv+aSg4kwQ/rSc2/z60TM+HxOEPy7nFs3D5nI9Z/j5xM/xtw+tWRkeyvBQhocavZx7Oq3dvLkry+gzvnn25qahNavxl/r9p9VNQ2tWzvFQhocyPJThoQwPZXgow0MZHsrwUIaHMjyU4aEMD2V4KMNDGR7K8FCGhzI8lOGhDA9leCjDQxkeyvBQhocyPJThody2HMpNjKHcthzKMx7KbcuhvKuHMjyUyzkob+6gApZzblteAs94KJdzUN7VQxkeyvBQhody23Ioty2HcttyKOd4KMNDGR7K8FCGr5JfMco0xZcK3zy04vR4O4Tha+QZD+UZD+UZT+Vdvd5heCjDQxkeyvBQhocyPJThoQwPZXgow0MZHsrwEOcv2xie4eKFWsNPZOatYQw/kx5vjZj2zzf8NOYO7xw/k9nDnzP8RHLb/s3wUG5pCuUGh1B+QwWUZzyUW5pel9vNeDLe1V+V3fI7mYDwNW1bbvh3HZdzD5tqL/WGf8/h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" alt="plot of chunk unnamed-chunk-3"/> </p>
+<pre><code class="r">library(ggplot2)
+library(gridExtra)
+</code></pre>
+
+<pre><code>## Warning: package &#39;gridExtra&#39; was built under R version 3.0.3
+</code></pre>
+
+<pre><code>## Loading required package: grid
+</code></pre>
+
+<pre><code class="r">set.seed(110104)
+
+training &lt;- read.csv(&quot;pml-training.csv&quot;)[ ,-1]
+# remove columns with NA&#39;s or empty values
+training &lt;- training[ ,!sapply(training, function(x) 
+  any(is.na(x) | (x==&quot;&quot;)))] 
+testing &lt;- read.csv(&quot;pml-testing.csv&quot;)[ ,-1]
+# matching the variables in testing and training sets
+vars &lt;- names(training) 
+testing &lt;- testing[ ,names(testing) %in% vars]
+</code></pre>
+
+<h1>* 1) Splitting for demonstation purposes</h1>
+
+<h1></h1>
+
+<pre><code class="r">inTraining &lt;- createDataPartition(training$classe, p = .6, list = FALSE)
+training.sub &lt;- training[inTraining, ]
+testing.sub &lt;- training[-inTraining, ]
+# For demonstration purposes we only use 250 observations
+training.sub &lt;- training.sub[sample(dim(training.sub)[1], 50), ]
+</code></pre>
+
+<pre><code class="r">modFit.dem &lt;- train(classe ~., data=training.sub, method=&quot;rf&quot;, prox=TRUE)
+</code></pre>
+
+<pre><code>## Loading required package: randomForest
+</code></pre>
+
+<pre><code>## Warning: package &#39;randomForest&#39; was built under R version 3.0.3
+</code></pre>
+
+<pre><code>## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.
+## Loading required namespace: e1071
+</code></pre>
+
+<pre><code>## Warning: model fit failed for Resample21: mtry= 2 Error in randomForest.default(x, y, mtry = param$mtry, ...) : 
+##   Can&#39;t have empty classes in y.
+## 
+## Warning: model fit failed for Resample21: mtry=41 Error in randomForest.default(x, y, mtry = param$mtry, ...) : 
+##   Can&#39;t have empty classes in y.
+## 
+## Warning: model fit failed for Resample21: mtry=80 Error in randomForest.default(x, y, mtry = param$mtry, ...) : 
+##   Can&#39;t have empty classes in y.
+## 
+## Warning: There were missing values in resampled performance measures.
+</code></pre>
+
+<pre><code class="r">modFit.dem
+</code></pre>
+
+<pre><code>## Random Forest 
+## 
+## 50 samples
+## 58 predictors
+##  5 classes: &#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39; 
+## 
+## No pre-processing
+## Resampling: Bootstrapped (25 reps) 
+## 
+## Summary of sample sizes: 50, 50, 50, 50, 50, 50, ... 
+## 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy  Kappa   Accuracy SD  Kappa SD
+##    2    0.4101    0.2141  0.1223       0.1472  
+##   41    0.3524    0.1503  0.1063       0.1193  
+##   80    0.3315    0.1303  0.1038       0.1139  
+## 
+## Accuracy was used to select the optimal model using  the largest value.
+## The final value used for the model was mtry = 2.
+</code></pre>
+
+<pre><code class="r">pred &lt;- predict(modFit.dem, testing.sub)
+testingTRUE &lt;- testing.sub$classe
+predRight &lt;- pred==testingTRUE
+table(pred, testingTRUE)
+</code></pre>
+
+<pre><code>##     testingTRUE
+## pred    A    B    C    D    E
+##    A 1451  773  783  725  656
+##    B   90  455  145   83  224
+##    C    1    2   54    0    1
+##    D    0   23   63  143    8
+##    E  690  265  323  335  553
+</code></pre>
+
+<p>Here we see an example of a tree</p>
+
+<pre><code class="r">tree &lt;- getTree(modFit.dem$finalModel, k=2, labelVar=TRUE)
+tree
+</code></pre>
+
+<pre><code>##    left daughter right daughter                      split var split point
+## 1              2              3               gyros_dumbbell_x       0.055
+## 2              4              5               user_namecharles       0.500
+## 3              6              7                   accel_belt_y      26.500
+## 4              8              9                    accel_arm_y     -57.000
+## 5             10             11                   roll_forearm      -9.250
+## 6             12             13                gyros_forearm_x      -0.120
+## 7             14             15               gyros_dumbbell_y      -0.095
+## 8              0              0                           &lt;NA&gt;       0.000
+## 9             16             17                   accel_belt_z      31.000
+## 10             0              0                           &lt;NA&gt;       0.000
+## 11             0              0                           &lt;NA&gt;       0.000
+## 12            18             19                gyros_forearm_x      -0.370
+## 13             0              0                           &lt;NA&gt;       0.000
+## 14            20             21               gyros_dumbbell_y      -0.265
+## 15            22             23                    yaw_forearm     -17.450
+## 16            24             25               magnet_forearm_x    -382.000
+## 17             0              0                           &lt;NA&gt;       0.000
+## 18             0              0                           &lt;NA&gt;       0.000
+## 19             0              0                           &lt;NA&gt;       0.000
+## 20             0              0                           &lt;NA&gt;       0.000
+## 21            26             27              magnet_dumbbell_y       7.500
+## 22            28             29                      pitch_arm     -13.950
+## 23            30             31                total_accel_arm      27.500
+## 24             0              0                           &lt;NA&gt;       0.000
+## 25             0              0                           &lt;NA&gt;       0.000
+## 26            32             33               magnet_forearm_z     580.000
+## 27             0              0                           &lt;NA&gt;       0.000
+## 28             0              0                           &lt;NA&gt;       0.000
+## 29             0              0                           &lt;NA&gt;       0.000
+## 30             0              0                           &lt;NA&gt;       0.000
+## 31            34             35 cvtd_timestamp02/12/2011 13:34       0.500
+## 32             0              0                           &lt;NA&gt;       0.000
+## 33             0              0                           &lt;NA&gt;       0.000
+## 34             0              0                           &lt;NA&gt;       0.000
+## 35             0              0                           &lt;NA&gt;       0.000
+##    status prediction
+## 1       1       &lt;NA&gt;
+## 2       1       &lt;NA&gt;
+## 3       1       &lt;NA&gt;
+## 4       1       &lt;NA&gt;
+## 5       1       &lt;NA&gt;
+## 6       1       &lt;NA&gt;
+## 7       1       &lt;NA&gt;
+## 8      -1          B
+## 9       1       &lt;NA&gt;
+## 10     -1          A
+## 11     -1          B
+## 12      1       &lt;NA&gt;
+## 13     -1          B
+## 14      1       &lt;NA&gt;
+## 15      1       &lt;NA&gt;
+## 16      1       &lt;NA&gt;
+## 17     -1          B
+## 18     -1          E
+## 19     -1          D
+## 20     -1          E
+## 21      1       &lt;NA&gt;
+## 22      1       &lt;NA&gt;
+## 23      1       &lt;NA&gt;
+## 24     -1          A
+## 25     -1          D
+## 26      1       &lt;NA&gt;
+## 27     -1          E
+## 28     -1          A
+## 29     -1          E
+## 30     -1          A
+## 31      1       &lt;NA&gt;
+## 32     -1          D
+## 33     -1          A
+## 34     -1          A
+## 35     -1          D
+</code></pre>
+
+<pre><code class="r">classvars &lt;- as.character(tree[ ,&quot;split var&quot;])[1:4]
+q1 &lt;- qplot(testing.sub[ ,classvars[1]], testing.sub[ ,classvars[2]], data=testing.sub, main=&quot;new data predictions&quot;, xlab=classvars[1], ylab=classvars[2], colour=predRight)
+q2 &lt;- qplot(testing.sub[ ,classvars[3]], testing.sub[ ,classvars[4]], data=testing.sub, main=&quot;new data predictions&quot;, xlab=classvars[3], ylab=classvars[4], colour=predRight)
+grid.arrange(q1, q2, ncol=2)
+</code></pre>
+
+<pre><code>## Error: undefined columns selected
+</code></pre>
+
+<ul>
+<li>Model with cross-validation and final prediction</li>
+</ul>
+
+<p>First we set-up the controls for the cross validation. We will do 10-fold cross-validation but only three repetitions since I lack the computational power. </p>
+
+<pre><code class="r"># 10-fold cross validation (gives a better estimation of the error)
+fitControl &lt;- trainControl(## 10-fold CV
+                           method = &quot;repeatedcv&quot;,
+                           number = 10,
+                           ## repeated two times
+                           repeats = 3)
+</code></pre>
+
+<p>Now we run the model. We can observer that even when restricting to 2500 out of the 19622 available observations it is really slow.</p>
+
+<pre><code class="r"># Again, doing the predictions with all the database is unfeasable, here we will take 2500 observations.
+# ptm &lt;- proc.time()
+#modFit &lt;- train(classe ~., data=training[sample(dim(training)[1], 2500), ],  trControl = fitControl, method=&quot;rf&quot;, prox=TRUE)
+#modFit
+#proc.time() - ptm
+</code></pre>
+
+<p>Here is the list of prediction of the 20 individuals in the testing set.</p>
+
+<pre><code class="r">#predict(modFit, testing)
+</code></pre>
+
+<pre><code class="r">pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0(&quot;problem_id_&quot;,i,&quot;.txt&quot;)
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+#pml_write_files(predict(modFit, testing))
+</code></pre>
 
 </body>
 

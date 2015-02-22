@@ -1,20 +1,112 @@
 Practical Machine Learning: Mauricio G. Tec
 ========================================================
 
-```{r}
+
+```{r echo=FALSE}
 setwd("C:/Users/Mauricio/Dropbox/Cambridge Courses/Practical Machine Learning")
 ```
+In this project we use a Random Forest to ---- data from ______ to try to predict ______. For the purposes of this html demonstation, instead of taking the full training set for training, I will split it in a training testing set, so that I can compare and tabulate the predicted values against the real ones in the training set. 
 
+However, I use the full model with 3-fold cross validation to compute the final results in the project (Note: I use only 3-fold validation since it is highly demanding in computational power).
 
+Explanation of the data here ----------
+
+* Set-up
+```{r results="hide"}
+library(caret)
+library(ggplot2)
+library(gridExtra)
+
+set.seed(110104)
+
+training <- read.csv("pml-training.csv")[ ,-1]
+# remove columns with NA's or empty values
+training <- training[ ,!sapply(training, function(x) 
+  any(is.na(x) | (x=="")))] 
+testing <- read.csv("pml-testing.csv")[ ,-1]
+# matching the variables in testing and training sets
+vars <- names(training) 
+testing <- testing[ ,names(testing) %in% vars]
+```
+
+* 1) Splitting for demonstation purposes
+========================================
+========================================
 
 
 ```{r}
-summary(cars)
+inTraining <- createDataPartition(training$classe, p = .6, list = FALSE)
+training.sub <- training[inTraining, ]
+testing.sub <- training[-inTraining, ]
+# For demonstration purposes we only use 250 observations
+training.sub <- training.sub[sample(dim(training.sub)[1], 50), ]
 ```
 
-You can also embed plots, for example:
+```{r}
+modFit.dem <- train(classe ~., data=training.sub, method="rf", prox=TRUE)
+modFit.dem
+```
+
+```{r}
+pred <- predict(modFit.dem, testing.sub)
+testingTRUE <- testing.sub$classe
+predRight <- pred==testingTRUE
+table(pred, testingTRUE)
+```
+
+
+Here we see an example of a tree
+```{r}
+tree <- getTree(modFit.dem$finalModel, k=2, labelVar=TRUE)
+tree
+```
 
 ```{r fig.width=7, fig.height=6}
-plot(cars)
+classvars <- as.character(tree[ ,"split var"])[1:4]
+q1 <- qplot(testing.sub[ ,classvars[1]], testing.sub[ ,classvars[2]], data=testing.sub, main="new data predictions", xlab=classvars[1], ylab=classvars[2], colour=predRight)
+q2 <- qplot(testing.sub[ ,classvars[3]], testing.sub[ ,classvars[4]], data=testing.sub, main="new data predictions", xlab=classvars[3], ylab=classvars[4], colour=predRight)
+grid.arrange(q1, q2, ncol=2)
+```
+
+
+* Model with cross-validation and final prediction
+
+First we set-up the controls for the cross validation. We will do 10-fold cross-validation but only three repetitions since I lack the computational power. 
+
+```{r results="hide"}
+
+# 10-fold cross validation (gives a better estimation of the error)
+fitControl <- trainControl(## 10-fold CV
+                           method = "repeatedcv",
+                           number = 10,
+                           ## repeated two times
+                           repeats = 3)
+```
+
+Now we run the model. We can observer that even when restricting to 2500 out of the 19622 available observations it is really slow.
+
+```{r}
+# Again, doing the predictions with all the database is unfeasable, here we will take 2500 observations.
+# ptm <- proc.time()
+#modFit <- train(classe ~., data=training[sample(dim(training)[1], 2500), ],  trControl = fitControl, method="rf", prox=TRUE)
+#modFit
+#proc.time() - ptm
+```
+
+Here is the list of prediction of the 20 individuals in the testing set.
+
+```{r}
+#predict(modFit, testing)
+```
+
+```{r results="hide"}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+#pml_write_files(predict(modFit, testing))
 ```
 
