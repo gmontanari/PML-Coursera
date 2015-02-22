@@ -1,0 +1,20 @@
+Practical Machine Learning: Mauricio G. Tec
+========================================================
+
+```{r}
+setwd("C:/Users/Mauricio/Dropbox/Cambridge Courses/Practical Machine Learning")
+```
+
+
+
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r fig.width=7, fig.height=6}
+plot(cars)
+```
+
